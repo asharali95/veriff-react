@@ -1,5 +1,6 @@
 import axios from "axios";
-import { API_PUBLIC_KEY } from "./env";
+import { sha256 } from "js-sha256";
+import { API_PRIVATE_KEY, API_PUBLIC_KEY } from "./env";
 
 const baseUrl = axios.create({ baseURL: "https://stationapi.veriff.com/" });
 const session = "/v1/sessions";
@@ -40,6 +41,17 @@ export const verify = (data) => {
       "X-AUTH-CLIENT": API_PUBLIC_KEY,
       "Content-Type": "application/json",
       "X-HMAC-SIGNATURE": data.signature,
+    },
+  });
+};
+
+export const getAllMediaFromSession = (data) => {
+  var hash = sha256.hmac.create(API_PRIVATE_KEY);
+  hash.update(data.sessionId);
+  return baseUrl.get(`/v1/sessions/${data.sessionId}/media`, {
+    headers: {
+      "X-AUTH-CLIENT": API_PUBLIC_KEY,
+      "X-HMAC-SIGNATURE": hash,
     },
   });
 };

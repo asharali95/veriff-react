@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, ModalHeader, ModalBody, Label, Button } from "reactstrap";
 import Webcam from "react-webcam";
 import * as actions from "../../config/apiservices";
@@ -26,8 +26,8 @@ const VerificationModal = (props) => {
                 verification: {
                   callback: "https://veriff.com",
                   person: {
-                    firstName: "John",
-                    lastName: "Doe",
+                    firstName: "Owais",
+                    lastName: "testing",
                     idNumber: "031245678",
                   },
                   document: {
@@ -93,7 +93,6 @@ export const TakePhotoModal = (props) => {
       .then((response) => {
         if (response.data.status === "success") {
           props.setImageId(response.data.image.id);
-          props.openNext(false, false, true);
         } else {
           alert(response.data.message);
         }
@@ -108,19 +107,65 @@ export const TakePhotoModal = (props) => {
       <>
         <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" />
         <button onClick={capture}>Capture photo</button>
+        {imgSrc && (
+          <button
+            onClick={() => {
+              props.openNext(false, false, true);
+            }}
+          >
+            Next
+          </button>
+        )}
         {imgSrc && <img src={imgSrc} />}
       </>
     </div>
   );
 };
-export const AfterPhotoModal = (props) => {
-  const [img, setimg] = useState("");
-  console.log(props);
+
+const ImageList = ({ image }) => {
+  const [img, setImg] = useState("");
+
   const returnHash = (payload) => {
     var hash = sha256.hmac.create(API_PRIVATE_KEY);
     hash.update(payload);
     return hash.hex();
   };
+  const getImage = () => {
+    let hash = returnHash(image.id);
+    actions.getMedia({ mediaId: image.id, signature: hash }).then((res) => {
+      if (res.data) {
+        console.log("gettingImage", res.data);
+        // setImg(res.data.)
+      }
+    });
+  };
+  return (
+    <div>
+      <h3>{image.context}</h3>
+      <Button onClick={getImage}>View Document</Button>
+    </div>
+  );
+};
+export const AfterPhotoModal = (props) => {
+  const [img, setimg] = useState("");
+  const [allImages, setAllImages] = useState([]);
+  const returnHash = (payload) => {
+    var hash = sha256.hmac.create(API_PRIVATE_KEY);
+    hash.update(payload);
+    return hash.hex();
+  };
+  useEffect(() => {
+    actions
+      .getAllMediaFromSession({ sessionId: props.sessionToken })
+      .then((res) => {
+        if (res.data) {
+          console.log(res.data.images);
+          setAllImages(res.data.images);
+        }
+      });
+  }, []);
+  console.log(props);
+
   const openLink = () => {
     const hash = returnHash(props.imageId);
     actions
@@ -156,7 +201,10 @@ export const AfterPhotoModal = (props) => {
   return (
     <div>
       <h2>Click on the link to see the picture</h2>
-      <Button onClick={openLink}>Open Picture</Button>
+      {allImages?.map((item) => (
+        <ImageList image={item} />
+      ))}
+      {/* <Button onClick={openLink}>Open Picture</Button> */}
       <Button onClick={verify}>Verify</Button>
 
       {img && <></>}
