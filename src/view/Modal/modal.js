@@ -194,7 +194,11 @@ export const AfterPhotoModal = (props) => {
       .verify({ sessionId: props.sessionToken, signature: hash, payload })
       .then((res) => {
         if (res.data) {
-          alert(res.data.verification.status);
+          alert(res.data.status);
+          if (res.data.status === "success") {
+            props.setSuccess(true);
+            props.openNext(false, false, false, true);
+          }
         }
       });
   };
@@ -209,6 +213,61 @@ export const AfterPhotoModal = (props) => {
 
       {img && <></>}
     </div>
+  );
+};
+
+export const DecisionModal = (props) => {
+  const [verification, setVerification] = useState(null);
+  const returnHash = (payload) => {
+    var hash = sha256.hmac.create(API_PRIVATE_KEY);
+    hash.update(payload);
+    return hash.hex();
+  };
+
+  const decisionCheck = () => {
+    const hash = returnHash(props.sessionToken);
+    actions
+      .getDecision({
+        sessionId: props.sessionToken,
+        signature: hash,
+      })
+      .then((res) => {
+        if (res && res.data) {
+          console.log("ajajaja", res);
+          setVerification(res.data.verification);
+        }
+      });
+  };
+  return (
+    <Modal isOpen={props.open}>
+      <ModalHeader toggle={props.handleModal}>X</ModalHeader>
+      <ModalBody>
+        <h1>Check Decision of session</h1>
+        <Button onClick={decisionCheck}>Check it now!</Button>
+        {verification && (
+          <div>
+            <h1>{verification?.status}</h1>
+            <div className="d-flex justify-content-between">
+              <p>Reason:{verification?.reason}</p>
+              <p>Decision Taken on:{verification?.decisionTime}</p>
+            </div>
+            <hr />
+            <h1>Document</h1>
+            <p>Document Type: {verification?.document?.documentType}</p>
+            <p>Number: {verification?.document?.number}</p>
+            <p>Country: {verification?.document?.country}</p>
+            <hr />
+            <h1>Person</h1>
+            <p>
+              Full Name: {verification?.person?.firstName}{" "}
+              {verification?.person?.lastName}
+            </p>
+            <p>Number: {verification?.person?.number}</p>
+            <p>Country: {verification?.person?.country}</p>
+          </div>
+        )}
+      </ModalBody>
+    </Modal>
   );
 };
 // export const

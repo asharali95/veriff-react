@@ -55,3 +55,13 @@ export const getAllMediaFromSession = (data) => {
     },
   });
 };
+
+export const getDecision = (data) => {
+  return baseUrl.get(session + `/${data.sessionId}/decision`, {
+    headers: {
+      "X-AUTH-CLIENT": API_PUBLIC_KEY,
+      "Content-Type": "application/json",
+      "X-HMAC-SIGNATURE": data.signature,
+    },
+  });
+};
