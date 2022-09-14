@@ -1,10 +1,67 @@
 import React, { useEffect, useState } from "react";
-import { Modal, ModalHeader, ModalBody, Label, Button } from "reactstrap";
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  Label,
+  Button,
+  UncontrolledButtonDropdown,
+  DropdownItem,
+  DropdownToggle,
+  DropdownMenu,
+  Row,
+  Col,
+  Input,
+} from "reactstrap";
 import Webcam from "react-webcam";
 import * as actions from "../../config/apiservices";
 import { API_PRIVATE_KEY } from "../../config/env";
 import { sha256 } from "js-sha256";
 const VerificationModal = (props) => {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [idNumber, setIdNumber] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [documentType, setDocumentType] = useState({
+    name: "Passport",
+    type: "PASSPORT",
+  });
+  const dropDownItem = [
+    { name: "Passport", type: "PASSPORT" },
+    { name: "ID Card", type: "ID_CARD" },
+    { name: "Drivers License", type: "DRIVERS_LICENSE" },
+    { name: "Residence Permit", type: "RESIDENCE_PERMIT" },
+  ];
+  const [vendorData, setVendorData] = useState("");
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    actions
+      .createSession({
+        verification: {
+          callback: "https://veriff.com",
+          person: {
+            firstName: firstName,
+            lastName: lastName,
+            idNumber: idNumber,
+          },
+          document: {
+            number: documentNumber,
+            type: documentType.type,
+            country: "PK",
+          },
+          vendorData: vendorData,
+          timestamp: new Date(Date.now()).toISOString(),
+        },
+      })
+      .then((res) => {
+        if (res.status > 200 && res.status < 299) {
+          props.setSessionToken(res.data.verification.id);
+          props.openNext(false, true, false, false);
+        } else {
+          alert("Session Token not created! Kindly check error");
+        }
+      });
+  };
   return (
     <Modal isOpen={props.open}>
       <ModalHeader toggle={props.handleModal}></ModalHeader>
@@ -18,39 +75,89 @@ const VerificationModal = (props) => {
             <li>Be prepared to take a selfie and photos of your ID</li>
           </ul>
         </div>
-        <Button
-          color="primary"
-          onClick={() => {
-            actions
-              .createSession({
-                verification: {
-                  callback: "https://veriff.com",
-                  person: {
-                    firstName: "Owais",
-                    lastName: "testing",
-                    idNumber: "031245678",
-                  },
-                  document: {
-                    number: "D09090909",
-                    type: "PASSPORT",
-                    country: "PK",
-                  },
-                  vendorData: "22222222",
-                  timestamp: new Date(Date.now()).toISOString(),
-                },
-              })
-              .then((res) => {
-                if (res.status > 200 && res.status < 299) {
-                  props.setSessionToken(res.data.verification.id);
-                  props.openNext(false, true, false);
-                } else {
-                  alert("Session Token not created! Kindly check error");
-                }
-              });
-          }}
-        >
-          Get Started
-        </Button>
+        <Row tag="form" onSubmit={handleSubmit} className="mt-3">
+          <Col xs={12} md={6}>
+            <Label>First Name</Label>
+            <Input
+              value={firstName}
+              onChange={(e) => {
+                setFirstName(e.target.value);
+              }}
+              type="text"
+              required
+            />
+          </Col>
+          <Col xs={12} md={6}>
+            <Label>Last Name</Label>
+            <Input
+              value={lastName}
+              onChange={(e) => {
+                setLastName(e.target.value);
+              }}
+              type="text"
+              required
+            />
+          </Col>
+          <Col xs={12} md={6}>
+            <Label>Id Number</Label>
+            <Input
+              value={idNumber}
+              onChange={(e) => {
+                setIdNumber(e.target.value);
+              }}
+              type="text"
+              required
+            />
+          </Col>
+          <Col xs={12} md={6}>
+            <Label>Vendor Data</Label>
+            <Input
+              value={vendorData}
+              onChange={(e) => {
+                setVendorData(e.target.value);
+              }}
+              type="text"
+              required
+            />
+          </Col>
+          <Col xs={12} md={6}>
+            <Label>Document Type</Label>
+            <UncontrolledButtonDropdown>
+              <DropdownToggle color="secondary" caret outline>
+                <span className="align-middle ms-50">Document Type</span>
+              </DropdownToggle>
+              <DropdownMenu>
+                {dropDownItem?.map((item) => (
+                  <DropdownItem
+                    key={item.type}
+                    onClick={() => {
+                      setDocumentType({
+                        name: item.name,
+                        type: item.type,
+                      });
+                    }}
+                  >
+                    <span className="align-middle ms-50">{item.name}</span>
+                  </DropdownItem>
+                ))}
+              </DropdownMenu>
+            </UncontrolledButtonDropdown>
+          </Col>
+          <Col xs={12} md={6}>
+            <Label>Document Number</Label>
+            <Input
+              value={documentNumber}
+              onChange={(e) => {
+                setDocumentNumber(e.target.value);
+              }}
+              type="text"
+              required
+            />
+          </Col>
+          <Button className="mt-3" color="primary" type="submit">
+            Get Started
+          </Button>
+        </Row>
       </ModalBody>
     </Modal>
   );
@@ -58,7 +165,10 @@ const VerificationModal = (props) => {
 export const TakePhotoModal = (props) => {
   const webcamRef = React.useRef(null);
   const [imgSrc, setImgSrc] = React.useState(null);
-
+  const [context, setContext] = React.useState({
+    name: "Document Front",
+    context: "document-front",
+  });
   const returnHash = (payload) => {
     var hash = sha256.hmac.create(API_PRIVATE_KEY);
     hash.update(payload);
@@ -68,7 +178,7 @@ export const TakePhotoModal = (props) => {
     const imageSrc = webcamRef.current.getScreenshot();
     const payload = {
       image: {
-        context: "document-front",
+        context: context.context,
         content: imageSrc,
         timestamp: "2019-10-29T06:30:25.597Z",
       },
@@ -82,7 +192,7 @@ export const TakePhotoModal = (props) => {
       .postMedia({
         payload: {
           image: {
-            context: "document-front",
+            context: context.context,
             content: imageSrc,
             timestamp: "2019-10-29T06:30:25.597Z",
           },
@@ -100,25 +210,71 @@ export const TakePhotoModal = (props) => {
   };
 
   return (
-    <div>
-      <h2>Take a photo of your document’s photo page</h2>
-      <p>Accepted documents: passport, ID card, driver's license.</p>
+    <Modal isOpen={props.open}>
+      <ModalHeader toggle={props.handleModal}></ModalHeader>
 
-      <>
-        <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" />
-        <button onClick={capture}>Capture photo</button>
-        {imgSrc && (
-          <button
-            onClick={() => {
-              props.openNext(false, false, true);
-            }}
-          >
-            Next
-          </button>
-        )}
-        {imgSrc && <img src={imgSrc} />}
-      </>
-    </div>
+      <ModalBody>
+        <div
+          className="d-flex flex-column align-items-center"
+          style={{ textAlign: "center" }}
+        >
+          <UncontrolledButtonDropdown>
+            <DropdownToggle color="secondary" caret outline>
+              <span className="align-middle ms-50">Document Context</span>
+            </DropdownToggle>
+            <DropdownMenu>
+              <DropdownItem
+                className="w-100"
+                onClick={() => {
+                  setContext({
+                    name: "Document Front",
+                    context: "document-front",
+                  });
+                }}
+              >
+                <span className="align-middle ms-50">Document Front</span>
+              </DropdownItem>
+              <DropdownItem
+                className="w-100"
+                onClick={() => {
+                  setContext({
+                    name: "Document Back",
+                    context: "document-back",
+                  });
+                }}
+              >
+                <span className="align-middle ms-50">Document Back</span>
+              </DropdownItem>
+            </DropdownMenu>
+          </UncontrolledButtonDropdown>
+          <h2 className="pt-4">Take a photo of your document’s photo page</h2>
+          <p>Accepted documents: passport, ID card, driver's license.</p>
+          <h5>Context: {context.name}</h5>
+          <>
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              style={{ width: "400px", height: "400px" }}
+            />
+            <button className="btn verifynow" onClick={capture}>
+              Capture photo
+            </button>
+            {imgSrc && (
+              <button
+                className="btn verifynow my-2"
+                onClick={() => {
+                  props.openNext(false, false, true, false);
+                }}
+              >
+                Next step
+              </button>
+            )}
+            {imgSrc && <img src={imgSrc} />}
+          </>
+        </div>
+      </ModalBody>
+    </Modal>
   );
 };
 
@@ -134,8 +290,11 @@ const ImageList = ({ image }) => {
     let hash = returnHash(image.id);
     actions.getMedia({ mediaId: image.id, signature: hash }).then((res) => {
       if (res.data) {
-        console.log("gettingImage", res.data);
-        // setImg(res.data.)
+        setImg(
+          `data:image/png;base64, ${window.btoa(
+            unescape(encodeURIComponent(res.data))
+          )}`
+        );
       }
     });
   };
@@ -143,6 +302,7 @@ const ImageList = ({ image }) => {
     <div>
       <h3>{image.context}</h3>
       <Button onClick={getImage}>View Document</Button>
+      {img && <img width={400} height={400} src={img} />}
     </div>
   );
 };
@@ -203,16 +363,27 @@ export const AfterPhotoModal = (props) => {
       });
   };
   return (
-    <div>
-      <h2>Click on the link to see the picture</h2>
-      {allImages?.map((item) => (
-        <ImageList image={item} />
-      ))}
-      {/* <Button onClick={openLink}>Open Picture</Button> */}
-      <Button onClick={verify}>Verify</Button>
+    <Modal isOpen={props.open}>
+      <ModalHeader toggle={props.handleModal}></ModalHeader>
+      <ModalBody style={{ maxHeight: "600px", overflowY: "scroll" }}>
+        <div>
+          <h3 style={{ textAlign: "center" }}>
+            Click on the link to see the picture
+          </h3>
+          <div className="d-flex justify-content-between flex-column">
+            {allImages?.map((item) => (
+              <ImageList image={item} />
+            ))}
+            {/* <Button onClick={openLink}>Open Picture</Button> */}
+            <Button onClick={verify} color="primary" className="mt-3">
+              Verify
+            </Button>
 
-      {img && <></>}
-    </div>
+            {img && <></>}
+          </div>
+        </div>
+      </ModalBody>
+    </Modal>
   );
 };
 
@@ -240,11 +411,11 @@ export const DecisionModal = (props) => {
   };
   return (
     <Modal isOpen={props.open}>
-      <ModalHeader toggle={props.handleModal}>X</ModalHeader>
+      <ModalHeader toggle={props.handleModal}></ModalHeader>
       <ModalBody>
         <h1>Check Decision of session</h1>
         <Button onClick={decisionCheck}>Check it now!</Button>
-        {verification && (
+        {verification ? (
           <div>
             <h1>{verification?.status}</h1>
             <div className="d-flex justify-content-between">
@@ -265,6 +436,8 @@ export const DecisionModal = (props) => {
             <p>Number: {verification?.person?.number}</p>
             <p>Country: {verification?.person?.country}</p>
           </div>
+        ) : (
+          <p>The decision has not been made yet. Please wait...</p>
         )}
       </ModalBody>
     </Modal>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button, Label } from "reactstrap";
+import "../verification-screen/main.css";
 import VerificationModal, {
   TakePhotoModal,
   AfterPhotoModal,
@@ -20,29 +21,42 @@ const VerificationScreen = () => {
 
   return (
     <div>
-      <Label tag={"h1"}>This is demo app</Label>
-      <Button
-        color="primary"
-        outline
-        onClick={() =>
-          setModal({
-            modal1: true,
-            modal2: false,
-            modal3: false,
-            modal4: false,
-          })
-        }
-      >
-        Verify it now
-      </Button>
+      <div className=" container text-center">
+        <Label tag={"h1"}>This is demo app</Label>
+        <Button
+          className="verifynow"
+          color="dark"
+          outline
+          onClick={() =>
+            setModal({
+              modal1: true,
+              modal2: false,
+              modal3: false,
+              modal4: false,
+            })
+          }
+        >
+          Verify it now
+        </Button>
+      </div>
       {modal.modal1 && (
         <VerificationModal
           open={modal.modal1}
-          openNext={(modal1, modal2, modal3) =>
-            setModal({ modal1: modal1, modal2: modal2, modal3: modal3 })
+          openNext={(modal1, modal2, modal3, modal4) =>
+            setModal({
+              modal1: modal1,
+              modal2: modal2,
+              modal3: modal3,
+              modal4: modal4,
+            })
           }
           handleModal={() => {
-            setModal({ modal1: true, modal2: false, modal3: false });
+            setModal({
+              modal1: false,
+              modal2: false,
+              modal3: false,
+              modal4: false,
+            });
           }}
           setSessionToken={(id) => {
             setSessionToken(id);
@@ -56,10 +70,20 @@ const VerificationScreen = () => {
           sessionToken={sessionToken}
           setSignature={setSignature}
           handleModal2={() => {
-            setModal({ modal1: false, modal2: false, modal3: false });
+            setModal({
+              modal1: false,
+              modal2: false,
+              modal3: false,
+              modal4: false,
+            });
           }}
-          openNext={(modal1, modal2, modal3) =>
-            setModal({ modal1: modal1, modal2: modal2, modal3: modal3 })
+          openNext={(modal1, modal2, modal3, modal4) =>
+            setModal({
+              modal1: modal1,
+              modal2: modal2,
+              modal3: modal3,
+              modal4: modal4,
+            })
           }
           setImageId={setImageId}
         />
@@ -69,6 +93,15 @@ const VerificationScreen = () => {
           imageId={imageId}
           signature={signature}
           sessionToken={sessionToken}
+          open={modal.modal3}
+          handleModal={() => {
+            setModal({
+              modal1: false,
+              modal2: false,
+              modal3: false,
+              modal4: false,
+            });
+          }}
           openNext={(modal1, modal2, modal3, modal4) =>
             setModal({
               modal1: modal1,

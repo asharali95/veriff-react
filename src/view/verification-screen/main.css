@@ -1,0 +1,17 @@
+.container {
+  /* text-align: "center"; */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.verifynow {
+  border: 2px solid indigo;
+  margin-top: 10px;
+  font-weight: 500;
+}
+.verifynow:hover {
+  background-image: linear-gradient(to right, indigo, rgba(76, 0, 130, 0.058));
+}
