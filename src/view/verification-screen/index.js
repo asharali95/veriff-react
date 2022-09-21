@@ -35,6 +35,18 @@ const VerificationScreen = () => {
       >
         Verify it now
       </Button>
+
+      <Button
+        color="primary"
+        outline
+        onClick={() => {
+          window.localStorage.removeItem("auth");
+          document.location.reload(true);
+        }}
+      >
+        Sign out
+      </Button>
+
       {modal.modal1 && (
         <VerificationModal
           open={modal.modal1}

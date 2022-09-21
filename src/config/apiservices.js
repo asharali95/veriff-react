@@ -3,6 +3,7 @@ import { sha256 } from "js-sha256";
 import { API_PRIVATE_KEY, API_PUBLIC_KEY } from "./env";
 
 const baseUrl = axios.create({ baseURL: "https://stationapi.veriff.com/" });
+const auth = axios.create({ baseURL: "http://localhost:8001/api/v1/auth" });
 const session = "/v1/sessions";
 
 // Create sessions from data
@@ -64,4 +65,12 @@ export const getDecision = (data) => {
       "X-HMAC-SIGNATURE": data.signature,
     },
   });
+};
+
+//auth apis
+export const login = (data) => {
+  return auth.post("/login", data);
+};
+export const signup = (data) => {
+  return auth.post("/signup", data);
 };
