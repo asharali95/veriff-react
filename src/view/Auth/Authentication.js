@@ -180,6 +180,7 @@ const SignupForm = (props) => {
               "auth",
               JSON.stringify(res.data.data.user)
             );
+            props.navigate("/app")
            
           }
         });
